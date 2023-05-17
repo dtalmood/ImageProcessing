@@ -1,3 +1,11 @@
+/*
+     How to run code
+        1. Make sure you are inside the Build file
+        2. if not in build file run command "cd build"
+        3. run command "make"
+        4. run command "./Myproject"
+*/
+
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
