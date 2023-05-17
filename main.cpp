@@ -40,9 +40,10 @@ int main(int argc, char** argv)
 
             // Get the RGB values of the pixel at (row, col)
             Vec3b rgb = image.at<Vec3b>(row, col);
-            int blue = rgb[0];
-            int green = rgb[1];
             int red = rgb[2];
+            int green = rgb[1];
+            int blue = rgb[0];
+            
             pixels[row][col][0] = red;
             pixels[row][col][1] = green;
             pixels[row][col][2] = blue;
