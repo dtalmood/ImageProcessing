@@ -17,6 +17,11 @@ int main(int argc, char** argv)
     // Read the image file
     Mat image = imread("/Users/dylantalmood/Desktop/JoeRogan.png");
 
+    // convert image to HSV color space
+    Mat hsvImage;
+    cvtColor(image, hsvImage, COLOR_BGR2HSV);
+
+
     // Check for failure
     if (image.empty()) 
     {
@@ -37,7 +42,7 @@ int main(int argc, char** argv)
 
     // lets grab the pixels and store them inside of a 3D matrix 
     cout << "Rows = " << image.rows << "\n" << "Col = " << image.cols << endl; 
-    int pixels[image.rows][image.cols][3];
+    Vec3b pixels[image.rows][image.cols];
     int count = 0;
 
     for (int row = 0; row < image.rows; ++row)
@@ -46,15 +51,11 @@ int main(int argc, char** argv)
         {
             count++;
 
-            // Get the RGB values of the pixel at (row, col)
-            Vec3b rgb = image.at<Vec3b>(row, col);
-            int red = rgb[2];
-            int green = rgb[1];
-            int blue = rgb[0];
+            // Get the HSV values of the pixel at (row, col)
+            //Vec3b hsvPixel = hsvImage.at<Vec3b>(row, col);
+            //int hue = hsvPixel[0];
             
-            pixels[row][col][0] = red;
-            pixels[row][col][1] = green;
-            pixels[row][col][2] = blue;
+            pixels[row][col] = hsvImage.at<Vec3b>(row, col);
 
             // Process the RGB values as needed
         }
