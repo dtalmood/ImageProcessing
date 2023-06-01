@@ -12,55 +12,67 @@
 using namespace cv;
 using namespace std;
 
-int main(int argc, char** argv)
-{
+int main() {
+    string dir1 = ""; //enter directory for image 1
+    
     // Read the image file
-    Mat image = imread("/Users/dylantalmood/Desktop/JoeRogan.png");
-
-    // convert image to HSV color space
-    Mat hsvImage;
-    cvtColor(image, hsvImage, COLOR_BGR2HSV);
-
+    Mat image1 = imread(dir1);
 
     // Check for failure
-    if (image.empty()) 
-    {
-        cout << "Could not open or find the image" << endl;
+    if (image1.empty()) {
+        cout << "Could not open or find the image for 1" << endl;
         cin.get(); //wait for any key press
         return -1;
     }
 
-    String windowName = "User Custom Image"; //Name of the window
+    string dir2 = ""; //enter directory for image 2
+    
+    // Read the image file
+    Mat image2 = imread(dir2);
 
-    namedWindow(windowName); // Create a window
+    // Check for failure
+    if (image2.empty()) {
+        cout << "Could not open or find the image for 2" << endl;
+        cin.get(); //wait for any key press
+        return -2;
+    }
 
-    imshow(windowName, image); // Show our image inside the created window.
+    if ((image1.rows != image2.rows) || (image1.cols != image2.cols)) {
+        cout << "Images are not the same size" << endl;
+        cin.get(); //wait for any key press
+        return -3;
+    }
 
+    String windowName1 = "User Custom Image 1"; //Name of the window
+    namedWindow(windowName1); // Create a window
+    imshow(windowName1, image1); // Show our image inside the created window.
     waitKey(0); // Wait for any keystroke in the window
+    destroyWindow(windowName1); //destroy the created window
 
-    destroyWindow(windowName); //destroy the created window
-
+    String windowName2 = "User Custom Image 2"; //Name of the window
+    namedWindow(windowName2); // Create a window
+    imshow(windowName2, image2); // Show our image inside the created window.
+    waitKey(0); // Wait for any keystroke in the window
+    destroyWindow(windowName2); //destroy the created window
+    
+    // convert image to HSV color space
+    Mat hsvImage1;
+    cvtColor(image1, hsvImage1, COLOR_BGR2HSV);
     // lets grab the pixels and store them inside of a 3D matrix 
-    cout << "Rows = " << image.rows << "\n" << "Col = " << image.cols << endl; 
-    Vec3b pixels[image.rows][image.cols];
-    int count = 0;
+    Vec3b pixels1[image1.rows][image1.cols];
+    
+    // convert image to HSV color space
+    Mat hsvImage2;
+    cvtColor(image2, hsvImage2, COLOR_BGR2HSV);
+    // lets grab the pixels and store them inside of a 3D matrix 
+    Vec3b pixels2[image2.rows][image2.cols];
 
-    for (int row = 0; row < image.rows; ++row)
-    {
-        for (int col = 0; col < image.cols; ++col)
-        {
-            count++;
-
-            // Get the HSV values of the pixel at (row, col)
-            //Vec3b hsvPixel = hsvImage.at<Vec3b>(row, col);
-            //int hue = hsvPixel[0];
-            
-            pixels[row][col] = hsvImage.at<Vec3b>(row, col);
-
-            // Process the RGB values as needed
+    for (int row = 0; row < image1.rows; ++row) {
+        for (int col = 0; col < image1.cols; ++col) {
+            pixels1[row][col] = hsvImage1.at<Vec3b>(row, col);
+            pixels2[row][col] = hsvImage2.at<Vec3b>(row, col);
         }
     }
     
-    cout << "Count = "<< count << endl;
     return 0;
 }
