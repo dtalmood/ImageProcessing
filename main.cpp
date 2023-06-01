@@ -154,6 +154,25 @@ int main() {
     //Mat rgbImage;
     //cvtColor(newImage1, rgbImage, COLOR_BGR2HSV);
     //imwrite("testRGB.png", newImage1);
+    
+    // convert image to HSV color space
+    Mat hsvImage1;
+    cvtColor(image1, hsvImage1, COLOR_BGR2HSV);
+    // lets grab the pixels and store them inside of a 3D matrix 
+    Vec3b pixels1[image1.rows][image1.cols];
+    
+    // convert image to HSV color space
+    Mat hsvImage2;
+    cvtColor(image2, hsvImage2, COLOR_BGR2HSV);
+    // lets grab the pixels and store them inside of a 3D matrix 
+    Vec3b pixels2[image2.rows][image2.cols];
 
+    for (int row = 0; row < image1.rows; ++row) {
+        for (int col = 0; col < image1.cols; ++col) {
+            pixels1[row][col] = hsvImage1.at<Vec3b>(row, col);
+            pixels2[row][col] = hsvImage2.at<Vec3b>(row, col);
+        }
+    }
+  
     return 0;
 }
