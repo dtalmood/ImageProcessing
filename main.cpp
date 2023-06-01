@@ -12,54 +12,148 @@
 using namespace cv;
 using namespace std;
 
-int main(int argc, char** argv)
-{
+int main() {
+    string dir1 = ""; //enter directory for image 1
+    
     // Read the image file
-    Mat image = imread("/Users/dylantalmood/Desktop/JoeRogan.png");
+    Mat image1 = imread(dir1);
 
     // Check for failure
-    if (image.empty()) 
-    {
-        cout << "Could not open or find the image" << endl;
+    if (image1.empty()) {
+        cout << "Could not open or find the image for 1" << endl;
         cin.get(); //wait for any key press
         return -1;
     }
 
-    String windowName = "User Custom Image"; //Name of the window
+    string dir2 = ""; //enter directory for image 2
+    
+    // Read the image file
+    Mat image2 = imread(dir2);
 
-    namedWindow(windowName); // Create a window
+    // Check for failure
+    if (image2.empty()) {
+        cout << "Could not open or find the image for 2" << endl;
+        cin.get(); //wait for any key press
+        return -2;
+    }
 
-    imshow(windowName, image); // Show our image inside the created window.
+    if ((image1.rows != image2.rows) || (image1.cols != image2.cols)) {
+        cout << "Images are not the same size" << endl;
+        cin.get(); //wait for any key press
+        return -3;
+    }
 
+//This block of code does not work on bender so comment it out
+//*********************
+    String windowName1 = "User Custom Image 1"; //Name of the window
+    namedWindow(windowName1); // Create a window
+    imshow(windowName1, image1); // Show our image inside the created window.
     waitKey(0); // Wait for any keystroke in the window
+    destroyWindow(windowName1); //destroy the created window
 
-    destroyWindow(windowName); //destroy the created window
+    String windowName2 = "User Custom Image 2"; //Name of the window
+    namedWindow(windowName2); // Create a window
+    imshow(windowName2, image2); // Show our image inside the created window.
+    waitKey(0); // Wait for any keystroke in the window
+    destroyWindow(windowName2); //destroy the created window
+//********************
 
+    // convert image to HSV color space
+    Mat hsvImage1;
+    cvtColor(image1, hsvImage1, COLOR_BGR2HSV);
     // lets grab the pixels and store them inside of a 3D matrix 
-    cout << "Rows = " << image.rows << "\n" << "Col = " << image.cols << endl; 
-    int pixels[image.rows][image.cols][3];
-    int count = 0;
+    Vec3b pixels1[image1.rows][image1.cols];
+    
+    // convert image to HSV color space
+    Mat hsvImage2;
+    cvtColor(image2, hsvImage2, COLOR_BGR2HSV);
+    // lets grab the pixels and store them inside of a 3D matrix 
+    Vec3b pixels2[image2.rows][image2.cols];
+    int position[image2.rows][image2.cols][2];
 
-    for (int row = 0; row < image.rows; ++row)
-    {
-        for (int col = 0; col < image.cols; ++col)
-        {
-            count++;
-
-            // Get the RGB values of the pixel at (row, col)
-            Vec3b rgb = image.at<Vec3b>(row, col);
-            int red = rgb[2];
-            int green = rgb[1];
-            int blue = rgb[0];
-            
-            pixels[row][col][0] = red;
-            pixels[row][col][1] = green;
-            pixels[row][col][2] = blue;
-
-            // Process the RGB values as needed
+    for (int row = 0; row < image1.rows; ++row) {
+        for (int col = 0; col < image1.cols; ++col) {
+            pixels1[row][col] = hsvImage1.at<Vec3b>(row, col);
+            pixels2[row][col] = hsvImage2.at<Vec3b>(row, col);
+            position[row][col][0] = row;
+            position[row][col][1] = col;
         }
     }
-    
-    cout << "Count = "<< count << endl;
+
+    //----------------------------------
+
+	Vec3b swap;
+	for (int k = 0; k < image2.rows * image2.cols; k++) {
+		for (int i = 0; i < image2.rows; i++) {
+			for (int j = 0; j < image2.cols - 1; j++) {
+                int ohue1 = pixels1[i][j][0];
+                int nhue1 = pixels1[i][j + 1][0];
+				if (ohue1 > nhue1) {
+					swap = pixels1[i][j];
+					pixels1[i][j] = pixels1[i][j + 1];
+					pixels1[i][j + 1] = swap;
+				}
+
+                int ohue2 = pixels2[i][j][0];
+                int nhue2 = pixels2[i][j + 1][0];
+				if (ohue2 > nhue2) {
+					swap = pixels2[i][j];
+					pixels2[i][j] = pixels2[i][j + 1];
+					pixels2[i][j + 1] = swap;
+
+                    int tempRow = position[i][j][0];
+                    int tempCol = position[i][j][1];
+                    position[i][j][0] = position[i][j + 1][0];
+                    position[i][j][1] = position[i][j + 1][1];
+                    position[i][j + 1][0] = tempRow;
+                    position[i][j + 1][1] = tempCol;
+				}
+			}
+            int ohue1 = pixels1[i][image2.cols - 1][0];
+            int nhue1 = pixels1[i + 1][0][0];
+			if (i < image2.rows - 1 && ohue1 > nhue1) {
+				swap = pixels1[i][image2.cols - 1];
+				pixels1[i][image2.cols - 1] = pixels1[i + 1][0];
+				pixels1[i + 1][0] = swap;
+			}
+            
+            int ohue2 = pixels2[i][image2.cols - 1][0];
+            int nhue2 = pixels2[i + 1][0][0];
+			if (i < image2.rows - 1 && ohue2 > nhue2) {
+				swap = pixels2[i][image2.cols - 1];
+				pixels2[i][image2.cols - 1] = pixels2[i + 1][0];
+				pixels2[i + 1][0] = swap;
+
+                int tempRow = position[i][image2.cols - 1][0];
+                int tempCol = position[i][image2.cols - 1][1];
+                position[i][image2.cols - 1][0] = position[i + 1][0][0];
+                position[i][image2.cols - 1][1] = position[i + 1][0][1];
+                position[i + 1][0][0] = tempRow;
+                position[i + 1][0][1] = tempCol;
+			}
+		}
+	}
+
+    Vec3b newImagePixels[image2.rows][image2.cols];
+    for (int row = 0; row < image1.rows; ++row) {
+        for (int col = 0; col < image1.cols; ++col) {
+            newImagePixels[position[row][col][0]][position[row][col][1]] = pixels1[row][col];
+        }
+    }
+
+    Mat newImage1(hsvImage1.size(), hsvImage1.type());
+    for (int row = 0; row < image1.rows; ++row) {
+        for (int col = 0; col < image1.cols; ++col) {
+            newImage1.at<Vec3b>(row, col) = newImagePixels[row][col];
+        }
+    }
+
+    //int hue = pixels1[2][2][0];
+    //cout << hue << endl;
+    imwrite("testHSV.png", newImage1);
+    //Mat rgbImage;
+    //cvtColor(newImage1, rgbImage, COLOR_BGR2HSV);
+    //imwrite("testRGB.png", newImage1);
+
     return 0;
 }
