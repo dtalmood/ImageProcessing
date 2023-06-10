@@ -9,12 +9,15 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <ctime>
+
 using namespace cv;
 using namespace std;
+
 int main() {
     // Took 2 hrs and 6 mins for a 800 x 800
     // Read the image file
-    Mat reference = imread("reference.jpeg"); //enter for image 1
+    Mat reference = imread("source.jpeg"); //enter for image 1
     // Check for failure
     if (reference.empty()) {
         cout << "Could not open or find the image for 1" << endl;
@@ -23,7 +26,7 @@ int main() {
     }
 
     // Read the image file
-    Mat source = imread("source.jpeg");
+    Mat source = imread("reference.jpeg");
     // Check for failure
     if (source.empty()) {
         cout << "Could not open or find the image for 2" << endl;
@@ -35,7 +38,7 @@ int main() {
         cin.get(); //wait for any key press
         return -3;
     }
-
+/*/
     // convert image to HSV color space
     Mat hsvReference;
     cvtColor(reference, hsvReference, COLOR_BGR2HSV);
@@ -59,8 +62,67 @@ int main() {
         position.push_back(temp);
         temp.clear();
     }
+/**/
     //----------------------------------
+	time_t start;
+	time_t current_time;
+	start = time(NULL);
+    // convert image to HSV color space
+    Mat bgrReference;
+    cvtColor(reference, bgrReference, COLOR_HSV2BGR);
+    
+    // convert image to BGR color space
+    Mat bgrSource;
+    cvtColor(source, bgrSource, COLOR_HSV2BGR);
+    
+    Mat newReference;
+    cvtColor(reference, newReference, COLOR_HSV2BGR);
 
+    vector<pair<int, int>> position;
+    position.push_back(make_pair(-1, -1));
+    cout << reference.rows * reference.cols << endl;
+
+    for (int refRow = 0; refRow < reference.rows; refRow++) {
+        for (int refCol = 0; refCol < reference.cols; refCol++) {
+            if (((refRow * reference.cols) + refCol) % 1000 == 0) cout << (refRow * reference.cols) + refCol << endl;
+
+            double near_neighbor_dist = 9999999;
+
+            for (int souRow = 0; souRow < source.rows; souRow++) {
+                for (int souCol = 0; souCol < source.cols; souCol++) {
+
+                    bool dupli = false;
+                    for (int i = 0; i < position.size(); i++) {
+                        if (souRow == position[i].first && souCol == position[i].second) {
+
+                            dupli = true;
+                            break;
+                        }
+                    }
+
+                    if (!dupli) {
+
+                        double dist = 0.0;
+                        dist = pow(bgrReference.at<Vec3b>(refRow, refCol)[0] - bgrSource.at<Vec3b>(souRow, souCol)[0], 2);
+                        dist += pow(bgrReference.at<Vec3b>(refRow, refCol)[1] - bgrSource.at<Vec3b>(souRow, souCol)[1], 2);
+                        dist += pow(bgrReference.at<Vec3b>(refRow, refCol)[2] - bgrSource.at<Vec3b>(souRow, souCol)[2], 2);
+                        dist = sqrt(dist);
+
+                        if (dist < near_neighbor_dist) {
+
+                            near_neighbor_dist = dist;
+                            position.pop_back();
+                            position.push_back(make_pair(souRow, souCol));
+                        }
+                    }
+                }
+            }
+
+            newReference.at<Vec3b>(refRow, refCol) = bgrSource.at<Vec3b>(position.back().first, position.back().second);
+        }
+    }
+
+/*/
 	Vec3b swap;
     int currHue = 0;
     int tempHue = 0;
@@ -140,11 +202,15 @@ int main() {
             hsvReference.at<Vec3b>(row, col) = newReferencePixels[row][col];
         }
     }
+/**/
 
-    Mat newReference;
-    cvtColor(hsvReference, newReference, COLOR_HSV2BGR);
+	current_time = time(NULL);
+	int time_passed = current_time - start;
+	int min = time_passed / 60;
+	int sec = time_passed % 60;
+	cout << "It took " << min << " minute(s) and " << sec << " second(s) to sort the vector" << endl << endl;
 
-    imwrite("test.jpeg", newReference);
+    imwrite("test1.jpeg", newReference);
 
     return 0;
 }
