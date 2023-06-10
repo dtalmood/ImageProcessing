@@ -5,100 +5,146 @@
         3. run command "make"
         4. run command "./Myproject"
 */
-
-
-#include <iostream>
 #include <opencv2/opencv.hpp>
+#include <iostream>
+#include <utility>
+#include <vector>
 using namespace cv;
 using namespace std;
-
-// Custom comparator function for sorting pixels based on RGB values
-bool comparePixels(const Vec3b& pixel1, const Vec3b& pixel2);
-
-
 int main() {
-    // Load JPEG image using OpenCV
+    // Took 2 hrs and 6 mins for a 800 x 800
     // Read the image file
-    Mat image = imread("source.jpeg");
-
-    // Check if the image was successfully loaded
-    if (image.empty()) {
-        cout << "Could not open or find the image" << endl;
+    Mat reference = imread("reference.jpeg"); //enter for image 1
+    // Check for failure
+    if (reference.empty()) {
+        cout << "Could not open or find the image for 1" << endl;
+        cin.get(); //wait for any key press
         return -1;
     }
 
-    // Extract pixel values into a vector
-    vector<Vec3b> pixels;
-    for (int y = 0; y < image.rows; y++) {
-        for (int x = 0; x < image.cols; x++) {
-            pixels.push_back(image.at<Vec3b>(y, x));
-        }
+    // Read the image file
+    Mat source = imread("source.jpeg");
+    // Check for failure
+    if (source.empty()) {
+        cout << "Could not open or find the image for 2" << endl;
+        cin.get(); //wait for any key press
+        return -2;
+    }
+    if ((reference.rows != source.rows) || (reference.cols != source.cols)) {
+        cout << "Images are not the same size" << endl;
+        cin.get(); //wait for any key press
+        return -3;
     }
 
-    // Sort the pixels based on RGB values
-    sort(pixels.begin(), pixels.end(), comparePixels);
-
-    // Create a new image with sorted pixels
-    Mat sortedImage(image.size(), image.type());
-    int index = 0;
-    for (int y = 0; y < image.rows; y++) {
-        for (int x = 0; x < image.cols; x++) {
-            sortedImage.at<Vec3b>(y, x) = pixels[index++];
-        }
-    }
-
+    // convert image to HSV color space
+    Mat hsvReference;
+    cvtColor(reference, hsvReference, COLOR_BGR2HSV);
+    // lets grab the pixels and store them inside of a 3D matrix 
+    Vec3b pixelsReference[reference.rows][reference.cols];
     
-    imwrite("sorted.jpeg", sortedImage);
-    waitKey(0);
+    // convert image to HSV color space
+    Mat hsvSource;
+    cvtColor(source, hsvSource, COLOR_BGR2HSV);
+    // lets grab the pixels and store them inside of a 3D matrix 
+    Vec3b pixelsSource[source.rows][source.cols];
+
+    vector<vector<pair <int, int>>> position;
+    vector<pair<int, int>> temp;
+    for (int row = 0; row < reference.rows; ++row) {
+        for (int col = 0; col < reference.cols; ++col) {
+            pixelsReference[row][col] = hsvReference.at<Vec3b>(row, col);
+            pixelsSource[row][col] = hsvSource.at<Vec3b>(row, col);
+            temp.push_back(make_pair(row, col));
+        }
+        position.push_back(temp);
+        temp.clear();
+    }
+    //----------------------------------
+
+	Vec3b swap;
+    int currHue = 0;
+    int tempHue = 0;
+    pair<int, int> tempPos = make_pair(0, 0);
+    int totalPixels = source.rows * source.cols;
+    cout << totalPixels << endl;
+    
+	for (int k = 0; k < totalPixels; k++) {
+        int counter = 0;
+        int row = 0;
+        int col = 0;
+        bool swapped = false;
+        while (counter < totalPixels - k - 1) {
+            currHue = pixelsReference[row][col][0];
+            tempHue = pixelsReference[row][col + 1][0];
+			if (currHue > tempHue) {
+				swap = pixelsReference[row][col];
+				pixelsReference[row][col] = pixelsReference[row][col + 1];
+				pixelsReference[row][col + 1] = swap;
+                swapped = true;
+			}
+
+            currHue = pixelsSource[row][col][0];
+            tempHue = pixelsSource[row][col + 1][0];
+			if (currHue > tempHue) {
+				swap = pixelsSource[row][col];
+				pixelsSource[row][col] = pixelsSource[row][col + 1];
+				pixelsSource[row][col + 1] = swap;
+
+                tempPos = position[row][col];
+                position[row][col] = position[row][col + 1];
+                position[row][col + 1] = tempPos;
+                swapped = true;
+			}
+
+            col = (col + 1) % (source.cols - 1);
+            if (col == 0) {
+                currHue = pixelsReference[row][source.cols - 1][0];
+                tempHue = pixelsReference[row + 1][0][0];
+    			if (row < source.rows - 1 && currHue > tempHue) {
+			    	swap = pixelsReference[row][source.cols - 1];
+		    		pixelsReference[row][source.cols - 1] = pixelsReference[row + 1][0];
+	    			pixelsReference[row + 1][0] = swap;
+                    swapped = true;
+    			}
+
+                currHue = pixelsSource[row][source.cols - 1][0];
+                tempHue = pixelsSource[row + 1][0][0];
+			    if (row < source.rows - 1 && currHue > tempHue) {
+		    		swap = pixelsSource[row][source.cols - 1];
+	    			pixelsSource[row][source.cols - 1] = pixelsSource[row + 1][0];
+    				pixelsSource[row + 1][0] = swap;
+
+                    tempPos = position[row][source.cols - 1];
+                    position[row][source.cols - 1] = position[row + 1][0];
+                    position[row + 1][0] = tempPos;
+                    swapped = true;
+                }
+                counter++;
+                row++;
+		    }
+            counter++;
+	    }
+        if (!swapped) break;
+        if (k % 1000 == 0) cout << k << endl;
+    }
+
+    Vec3b newReferencePixels[source.rows][source.cols];
+    for (int row = 0; row < reference.rows; ++row) {
+        for (int col = 0; col < reference.cols; ++col) {
+            newReferencePixels[position[row][col].first][position[row][col].second] = pixelsReference[row][col];
+        }
+    }
+
+    for (int row = 0; row < reference.rows; ++row) {
+        for (int col = 0; col < reference.cols; ++col) {
+            hsvReference.at<Vec3b>(row, col) = newReferencePixels[row][col];
+        }
+    }
+
+    Mat newReference;
+    cvtColor(hsvReference, newReference, COLOR_HSV2BGR);
+
+    imwrite("test.jpeg", newReference);
 
     return 0;
 }
-
-bool comparePixels(const Vec3b& pixel1, const Vec3b& pixel2) {
-    if (pixel1[2] != pixel2[2]) {
-        return pixel1[2] < pixel2[2]; // Sort by red channel
-    }
-    if (pixel1[1] != pixel2[1]) {
-        return pixel1[1] < pixel2[1]; // Sort by green channel
-    }
-    return pixel1[0] < pixel2[0]; // Sort by blue channel
-}
-
-
-
-
-/*
-// C++ program for the above approach
-#include <iostream>
-#include <opencv2/opencv.hpp>
-using namespace cv;
-using namespace std;
-  
-// Driver code
-int main()
-{
-    // Read the image file as
-    // imread("default.jpg");
-    Mat image = imread("source.jpeg",
-                       IMREAD_GRAYSCALE);
-  
-    // Error Handling
-    if (image.empty()) {
-        cout << "Image File "
-             << "Not Found" << endl;
-  
-        // wait for any key press
-        cin.get();
-        return -1;
-    }
-  
-    // Show Image inside a window with
-    // the name provided
-    imshow("Window Name", image);
-  
-    // Wait for any keystroke
-    waitKey(0);
-    return 0;
-}
-*/
-
