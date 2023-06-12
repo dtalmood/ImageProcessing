@@ -1,4 +1,4 @@
-#include <cuda_runtime.h>
+#include <stdio.h>
 
 struct ComparePixel {
     __host__ __device__ bool operator()(const uchar3& pixel1, const uchar3& pixel2) const {
