@@ -1,40 +1,17 @@
-CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra
-LIBS = `pkg-config --libs opencv`
+CC := nvcc
+CFLAGS := -std=c++11
+LDFLAGS := `pkg-config --libs opencv`
 
-SRCS = cpu.cpp
-OBJS = $(SRCS:.cpp=.o)
-EXECUTABLE = Myproject
+all: sort_pixels
 
-default: $(EXECUTABLE)
+sort_pixels: main.o kernel.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(EXECUTABLE): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LIBS)
+main.o: main.cu
+	$(CC) $(CFLAGS) -c $<
 
-.cpp.o:
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-clean:
-	rm -f $(OBJS) $(EXECUTABLE)
-
-
-NVCC        = nvcc
-ifeq (,$(shell which nvprof))
-NVCC_FLAGS  = -O3 -arch=sm_20
-else
-NVCC_FLAGS  = -O3 
-endif
-LD_FLAGS    = -lcudart
-EXE	        = imageprocessing
-OBJ	        = main.o
-
-default: $(EXE)
-
-main.o: main.cu kernel.cu
-	$(NVCC) -c -o $@ $< $(NVCC_FLAGS)
-
-$(EXE): $(OBJ)
-	$(NVCC) $(OBJ) -o $(EXE) $(LD_FLAGS)
+kernel.o: kernel.cu
+	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f $(OBJ) $(EXE)
+	rm -rf *.o sort_pixels
