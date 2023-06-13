@@ -1,6 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
-
+#include "support.h"
 //incompatibility issues with open cv, header was needed for compilation
 #include "kernel.h"
 
