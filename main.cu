@@ -1,6 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
-#include "support.h"
+#include <ctime>
 //incompatibility issues with open cv, header was needed for compilation
 #include "kernel.h"
 
@@ -13,14 +13,15 @@ int main()
     // We call the importImage Function which 
     Mat image = importImage();
     
-    if (importedImage.empty())
+    if (image.empty())
     {
         cout << "Goodbye!" << endl;
         return 0;
     } 
     else 
     {
-        Timer timer;
+	    time_t start;
+        time_t current_time;
 
         // Check if the image was successfully loaded
         if (image.empty()) {
@@ -32,8 +33,8 @@ int main()
         //vector is used instead
 
 
-        printf("\n Phase 1: Traverse the 2D matrix and extract each pixel"); fflush(stdout);
-        startTime(&timer);
+        printf("\n Phase 1: Traverse the 2D matrix and extract each pixel\n"); fflush(stdout);
+	    start = time(NULL);
         vector<uchar3> pixels;
         //traverse 2D matrix to extract pixel
         for (int y = 0; y < image.rows; y++) {
@@ -43,7 +44,11 @@ int main()
                 pixels.push_back(rgbPixel);
             }
         }
-        stopTime(&timer); printf("%f s\n", elapsedTime(timer));
+	    current_time = time(NULL);
+	    int time_passed = current_time - start;
+        int min = time_passed / 60;
+        int sec = time_passed % 60;
+        printf("It took %d minute(s) and %d second(s)\n", min, sec);
 
         // Allocate host variables ----------------------------------------------
 
@@ -64,10 +69,14 @@ int main()
 
 
         // Launch kernel ---------------------------
-        printf("\n Phase 2: Launch the pixelSort Kernel"); fflush(stdout);
-        startTime(&timer);
+        printf("\n Phase 2: Launch the pixelSort Kernel\n"); fflush(stdout);
+	    start = time(NULL);
         pixelSort(d_pixels, pixels.size());
-        stopTime(&timer); printf("%f s\n", elapsedTime(timer));
+	    current_time = time(NULL);
+	    time_passed = current_time - start;
+        min = time_passed / 60;
+        sec = time_passed % 60;
+        printf("It took %d minute(s) and %d second(s)\n", min, sec);
 
         // Copy device variables from host ----------------------------------------
         cudaMemcpy(pixels.data(), d_pixels, pixels.size() * sizeof(uchar3), cudaMemcpyDeviceToHost);
